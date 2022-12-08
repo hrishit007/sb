@@ -1,0 +1,12 @@
+.main-content{
+    height: calc(100vh - 4em);
+    /* position: absolute; */
+    width: 100vw;
+    display: flex;
+}
+.right-body {
+    height: calc(100vh - 4em);
+    width: calc(100vw - 120px);
+    background-color: #0d1b1c
+}
+
