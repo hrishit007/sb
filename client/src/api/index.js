@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const PORT=import.meta.env.VITE_SERVER_PORT;
 const base=`http://localhost:${PORT}` ;
-const API = axios.create({ baseURL: "http://localhost:5000" });
+const API = axios.create({ baseURL: base });
 
 API.interceptors.request.use((req) => {
   if (localStorage.getItem('profile')) {

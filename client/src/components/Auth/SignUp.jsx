@@ -14,6 +14,7 @@ export default function SignUp()
     const [formData,setFormData]=useState(initialData);
     const [showPassword,setShowPassword]=useState(false);
     const [passwordsNotMatching,setPasswordsNotMatching]=useState(false);
+    const [usernameAlreadyExists,setUsernameAlreadyExists]=useState(false);
     const dispatch=useDispatch();
     const history=useHistory();
     const classes=useStyles();
@@ -29,13 +30,18 @@ export default function SignUp()
     const handlePasswordsNotMatching=()=>{
         setPasswordsNotMatching(true);
     }
+    const handleUsernameAlreadyExists=()=>{
+        setUsernameAlreadyExists(true);
+    }
     const handleSubmit=(event)=>{
         event.preventDefault();
+        setPasswordsNotMatching(false);
+        setUsernameAlreadyExists(false);
         if(formData.password!=formData.confirmPassword){
             handlePasswordsNotMatching();
         }
         else{
-            dispatch(signup(formData,history));
+            dispatch(signup(formData,history,handleUsernameAlreadyExists));
         }
 
     }
@@ -59,6 +65,7 @@ export default function SignUp()
                         <Input name="password" label="Password" handleChange={handleChange} type={showPassword? "text" :"password"} handleShowPassword={handleShowPassword} />
                         <Input name="confirmPassword" label="Repeat Password" handleChange={handleChange} type="password"/>
                         {passwordsNotMatching && <p className="red-error-login">Passwords do not match, try again.</p>}
+                        {usernameAlreadyExists && <p className="red-error-login">User already exists, please login.</p>}
                     </Grid>
         
                         <Button type="submit" fullWidth variant="contained" color="primary" className={`login-button ${classes.submit}`}>

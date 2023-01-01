@@ -1,12 +1,17 @@
 import "./login.css";
 import React from "react";
 import Input from './Input';
-import { useState } from "react";
-// import { Button,Grid } from "@material-ui/core";
-import {Button,Grid,Divider} from "@mui/material";
+import { useState,useEffect,useRef,useLayoutEffect } from "react";
+import { Button,Grid } from "@material-ui/core";
+import {Divider, Box} from "@mui/material";
 import {useDispatch} from 'react-redux';
 import { login } from "../../actions/user";
 import {useHistory} from "react-router-dom";
+import { getAuth, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import { initializeApp } from "firebase/app";
+import jwt_decode from "jwt-decode";
+
+
 
 import useStyles from './styles';
 
@@ -17,9 +22,64 @@ export default function Login()
     const [showPassword,setShowPassword]=useState(false);
     const [invalidCredentials,setInvalidCredentials]=useState(false);
     const [usernameDNE,setUsernameDNE]=useState(false);
+    const ref=useRef(null);
+    const [width,setWidth]=useState(0);
     const dispatch=useDispatch();
     const history=useHistory();
     const classes=useStyles();
+    const provider= new GoogleAuthProvider();
+    const firebaseConfig = {
+        apiKey: import.meta.env.VITE_API_KEY,
+        authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+        projectId: import.meta.env.VITE_PROJECT_ID,
+        storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+        messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+        appId: import.meta.env.VITE_APP_ID,
+        measurementId: import.meta.env.VITE_MEASUREMENT_ID
+    };
+
+
+    
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    useLayoutEffect(()=>{
+        setWidth(ref.current.offsetWidth);
+    },[])
+
+    useEffect(()=>{
+        google.accounts.id.initialize({
+            client_id: `${import.meta.env.VITE_GOOGLE_CLIENT_ID}`,
+            callback: handleCredentialResponse
+          });
+          google.accounts.id.renderButton(
+            document.getElementById("buttonDiv"),
+            { theme: "outline", size: "large" , width: width}  // customization attributes
+          );
+    },[width])
+    
+    const handleCredentialResponse=(response)=> {
+        const idToken = response.credential;
+        const result=jwt_decode(idToken);
+        signInWithCredential(auth, credential).catch((error) => {
+            // Handle Errors here.
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            const email = error.email;
+            const credential = GoogleAuthProvider.credentialFromError(error);
+          });
+          try {
+            dispatch({type: 'LOGIN' , data: {result,token:idToken}});
+
+            history.push('/');
+        } catch (error) {
+            console.log(error);
+        }
+
+      }
+
 
     const handleChange=(event)=>{
         setFormData({...formData, [event.target.name] : event.target.value })
@@ -32,11 +92,16 @@ export default function Login()
 
     const handleSubmit=(event)=>{
         event.preventDefault();
-        dispatch(login(formData,history,handleInvalidCredentials));
+        setInvalidCredentials(false);
+        setUsernameDNE(false);
+        dispatch(login(formData,history,handleInvalidCredentials,handleUsernameDNE));
 
     }
     const handleInvalidCredentials=()=>{
         setInvalidCredentials(true);
+    }
+    const handleUsernameDNE=()=>{
+        setUsernameDNE(true);
     }
     return (
         
@@ -46,7 +111,7 @@ export default function Login()
                 <h4>Search your data and let us provide you the package!</h4>
                 <img src="/images/globe.png"/>
             </div>
-            <div className="login">
+            <div className="login" >
                 <a className="login-link" href="/">Back</a>
                 <h1>Login</h1>
                 <p className="login-paragraph">Welcome Back! Please Log in to your account.</p>
@@ -55,17 +120,19 @@ export default function Login()
                         <Input name="email" label="Email Address" handleChange={handleChange} type="email" />
                         <Input name="password" label="Password" handleChange={handleChange} type={showPassword? "text" :"password"} handleShowPassword={handleShowPassword} />
                         {invalidCredentials && <p className="red-error-login">Invalid Username or Password, try again.</p>}
-                        {usernameDNE && <p className="red-error-login">EmailID does not exist. Please Sign Up or login with Google</p>}
+                        {usernameDNE && <p className="red-error-login">Email ID does not exist. Please Sign Up or login with Google</p>}
                     </Grid>
                         <br/>
                         <Button type="submit" fullWidth variant="contained" color="primary" className={`login-button ${classes.submit}`}>
                             "LOG IN"
                         </Button>                  
                 </form>
-                <br/>
-                <Divider>OR</Divider>
-
                 <a className="login-link fp" href="#" >Forgot Password?</a>
+
+                <br/>
+                <Divider className="login-paragraph">OR</Divider>
+                <br/>
+                <Box id="buttonDiv" ref={ref}></Box> 
             </div>
         </div>
             

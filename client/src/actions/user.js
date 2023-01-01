@@ -1,5 +1,6 @@
-import { LOGIN,LOGOUT } from "../constants";
+import { LOGIN,LOGOUT,INVALID_CREDENTIALS,USERNAME_DNE,USER_ALREADY_EXISTS } from "../constants";
 import * as api from '../api';
+import { useDispatch } from "react-redux";
 // import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 // import { initializeApp } from "firebase/app";
 // import { getAnalytics } from "firebase/analytics";
@@ -20,8 +21,7 @@ import * as api from '../api';
 
 // const auth = getAuth(app);
 
-export const login= (formData,history,onInvalidCredentials)=>async(dispatch)=>{
-    console.log('Working');
+export const login= (formData,history,onInvalidCredentials,onUsernameDNE)=>async(dispatch)=>{
     try {
         
         const { data } = await api.signIn(formData);
@@ -30,16 +30,16 @@ export const login= (formData,history,onInvalidCredentials)=>async(dispatch)=>{
         history.push('/');
         
     } catch (error) {
-        console.log(error);
-        console.log(error.response);
         const errorMessage=error.response.data.message;
         switch (errorMessage) {
-            case 'Invalid Credentials':
+            case INVALID_CREDENTIALS:
                 onInvalidCredentials();
                 break;
-        
+            case USERNAME_DNE:
+                onUsernameDNE();
+                break;        
             default:
-                break;
+                //no action as of now
         }
     }
     
@@ -62,8 +62,33 @@ export const login= (formData,history,onInvalidCredentials)=>async(dispatch)=>{
 
 // }
 
-export const signup= (formData,history)=>async(dispatch)=>{
-    console.log('Working');
-    history.push('/');
+export const signup= (formData,history,onUsernameAlreadyExists)=>async(dispatch)=>{
+    try {
+        const { data } = await api.signUp(formData);
+        dispatch({ type: LOGIN, data });
+        history.push('/');
+        
+    } catch (error) {
+        const errorMessage=error.response.data.message;
+        switch (errorMessage) {
+            case USER_ALREADY_EXISTS:
+                onUsernameAlreadyExists();
+
+                
+                break;
+        
+            default:
+                break;
+        }
+        
+    }
     
+    
+}
+
+export const logout=(history,onUserLogout)=>async(dispatch)=>{
+    dispatch({type:LOGOUT});
+    onUserLogout();
+    history.push('/');
+
 }
